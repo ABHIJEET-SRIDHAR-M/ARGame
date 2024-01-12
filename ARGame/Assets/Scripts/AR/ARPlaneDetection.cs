@@ -17,19 +17,19 @@ namespace AR
     {
 
         public GameObject groundPrefab;
-        public TMP_Text text;
+
+        public GameObject anchoredGround;
         private ARPlaneManager _arPlaneManager;
         private ARAnchorManager _anchorManager;
-        private PlacementManager _placementManager;
         private ScreenManager _screenManager;
         
-        private TrackableId _planeID = TrackableId.invalidId;
+        public TrackableId _planeID = TrackableId.invalidId;
         
         // Start is called before the first frame update
         void Start()
         {
             SetupARComponents();
-            
+            OffPlaneDetection();
         }
 
         private void SetupARComponents()
@@ -38,7 +38,6 @@ namespace AR
             _arPlaneManager = FindObjectOfType<ARPlaneManager>();
             _screenManager = FindObjectOfType<ScreenManager>();
             _anchorManager = GetComponent<ARAnchorManager>();
-            _placementManager = GetComponent<PlacementManager>();
 
             // Subscribe to plane change events
             if (_arPlaneManager != null)
@@ -75,13 +74,12 @@ namespace AR
             if (_planeID == TrackableId.invalidId)
             {
                 var planeArea = plane.extents.x * plane.extents.y;
-                if (planeArea > 0.02f)
+                if (planeArea > 0.01f)
                 {
-                    _screenManager.ShowScreen(ScreenManager.UIScreen.RotationMenu );
+                    _screenManager.ShowScreen(Enums.UIScreen.RotationMenu );
                     CreateAnchorAndPlaceGround(plane);
                     _planeID = plane.trackableId;
-                    text.text += ($"Bounds Center: {plane.center}, Extents: {plane.extents}, Area: {planeArea}");
-                    
+                    OffPlaneDetection();
                 }
             }
             else
@@ -91,7 +89,7 @@ namespace AR
                     var planeArea = plane.extents.x * plane.extents.y;
                     if (planeArea > 0.05f)
                     {
-                        OffPlaneDetection();
+                        //OffPlaneDetection();
                     }
                 }
             }
@@ -102,7 +100,7 @@ namespace AR
             var oldPrefab = _anchorManager.anchorPrefab;
             _anchorManager.anchorPrefab = groundPrefab;
             var anchor = _anchorManager.AttachAnchor(plane, new Pose(plane.center, Quaternion.identity));
-            _placementManager.SetProp(anchor);
+            anchoredGround = anchor.gameObject;
             _anchorManager.anchorPrefab = oldPrefab;
         }
         
@@ -116,14 +114,44 @@ namespace AR
             }
         }
         
-        private void OffPlaneDetection()
+        public void OffPlaneDetection()
         {
-            if (_arPlaneManager != null)
+            if (_arPlaneManager)
             {
+                _arPlaneManager.SetTrackablesActive(false);
+                
                 // Toggle plane detection state
                 _arPlaneManager.enabled = false;
-
+                
             }
+
+            var points = FindObjectOfType<ARPointCloudManager>();
+            if (points)
+            {
+                points.SetTrackablesActive(false);
+                points.enabled = false;
+            }
+            
+        }
+        
+        public void OnPlaneDetection()
+        {
+            if (_arPlaneManager)
+            {
+                _arPlaneManager.SetTrackablesActive(true);
+                
+                // Toggle plane detection state
+                _arPlaneManager.enabled = true;
+                
+            }
+
+            var points = FindObjectOfType<ARPointCloudManager>();
+            if (points)
+            {
+                points.SetTrackablesActive(true);
+                points.enabled = true;
+            }
+            
         }
 
         

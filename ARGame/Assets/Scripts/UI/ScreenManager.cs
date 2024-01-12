@@ -1,27 +1,22 @@
-using Common;
+
 using UnityEngine;
 
 namespace UI
 {
     public class ScreenManager : MonoBehaviour
     {
-
-        public enum UIScreen
-        {
-            MainMenu,
-            PositionMenu,
-            RotationMenu,
-            // Add more screen names as needed
-        }
-
+        
+        
         private Transform[] screens;
-        public UIScreen CurrentScreen { get; private set; } = UIScreen.MainMenu;
+        public Enums.UIScreen CurrentScreen { get; private set; } = Enums.UIScreen.MainMenu;
+
+        public bool showScore = false;
 
         void Start()
         {
             SetupUIScreens();
         }
-
+        
         private void SetupUIScreens()
         {
             // Get all the first-level children of the canvas
@@ -29,15 +24,15 @@ namespace UI
             for (int i = 0; i < transform.childCount; i++)
             {
                 screens[i] = transform.GetChild(i);
-                //screens[i].gameObject.SetActive(false);
+                screens[i].gameObject.SetActive(false);
             }
 
             // Show the initial screen
-            //ShowScreen(UIScreen.MainMenu);
+            ShowScreen(Enums.UIScreen.MainMenu);
         }
 
         // Function to transition to a specific screen by enum
-        public void ShowScreen(UIScreen screen)
+        public void ShowScreen(Enums.UIScreen screen)
         {
             int index = (int)screen;
 
@@ -52,28 +47,8 @@ namespace UI
                 // Update the current screen
                 CurrentScreen = screen;
             }
+            screens[(int)Enums.UIScreen.ScoreMenu].gameObject.SetActive(showScore);
         }
         
-        public void ForceScreen(UIScreen screen)
-        {
-            int index = (int)screen;
-
-            if (index >= 0 && index < screens.Length)
-            {
-                foreach (var screen1 in screens)
-                {
-                    screen1.gameObject.SetActive(false);
-                }
-
-                // Show the new screen
-                screens[index].gameObject.SetActive(true);
-
-                // Update the current screen
-                CurrentScreen = screen;
-            }
-        }
-
-
-
     }
 }

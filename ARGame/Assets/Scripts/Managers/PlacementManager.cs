@@ -1,4 +1,5 @@
 using System;
+using AR;
 using TMPro;
 using UI;
 using UnityEngine;
@@ -10,119 +11,70 @@ namespace Managers
     public class PlacementManager : MonoBehaviour
     {
 
-        public Slider horizontalPositionSlider;
-        public Slider rotationSlider;
-        public Slider verticalPositionSlider;
-
-        public TMP_Text text;
-    
-        private const float HPSliderRange = .1f;
-        private const float HPSliderStart = 0f;
+        private const float HMoveStep = .02f;
+        private const float VMoveStep = .02f;
         
-        private const float VPSliderRange = .1f;
-        private const float VPSliderStart = 0f;
+        private const int HMoveCount = 5;
+        private const int VMoveCount = 5;
         
-        private const float RSliderRange = 1f;
-        private const float RSliderStart = 0f;
-
-        private GameObject _propInSlider;
+        private int _currentHCount;
+        private int _currentVCount;
         
-        private ScreenManager _screenManager;
-
-        public void SetProp(ARAnchor anchor)
+        public void OnUp()
         {
-            _propInSlider = anchor.gameObject;
-            SetupSlider();
+            if (_currentVCount >= VMoveCount) return;
+
+            var pd = FindObjectOfType<ARPlaneDetection>();
+            if (!pd) return;
+            var ground = pd.anchoredGround;
+            if (!ground) return;
+            var pos = ground.transform.position + ground.transform.forward*VMoveStep;
+            ground.transform.position = pos;
+            _currentVCount++;
         }
-        private void Start()
+        public void OnDown()
         {
-            _screenManager = FindObjectOfType<ScreenManager>();
-
-            SetupSlider();
-            
-            _screenManager.ForceScreen(ScreenManager.UIScreen.MainMenu);
+            if (_currentVCount <= -VMoveCount) return;
+            var pd = FindObjectOfType<ARPlaneDetection>();
+            if (!pd) return;
+            var ground = pd.anchoredGround;
+            if (!ground) return;
+            var pos = ground.transform.position - ground.transform.forward*VMoveStep;
+            ground.transform.position = pos;
+            _currentVCount--;
+        }
+        public void OnRight()
+        {
+            if (_currentHCount <= -HMoveCount) return;
+            var pd = FindObjectOfType<ARPlaneDetection>();
+            if (!pd) return;
+            var ground = pd.anchoredGround;
+            if (!ground) return;
+            var pos = ground.transform.position - ground.transform.right*HMoveStep;
+            ground.transform.position = pos;
+            _currentHCount--;
+        }
+        public void OnLeft()
+        {
+            if (_currentHCount >= HMoveCount) return;
+            var pd = FindObjectOfType<ARPlaneDetection>();
+            if (!pd) return;
+            var ground = pd.anchoredGround;
+            if (!ground) return;
+            var pos = ground.transform.position + ground.transform.right*HMoveStep;
+            ground.transform.position = pos;
+            _currentHCount++;
         }
 
-        private Quaternion GetPrefabRotation(Quaternion originalAngle)
+        public void OnSliderValueChanged(float value)
         {
-            var rot = originalAngle.eulerAngles;
-            rot = new Vector3(rot.x, rot.y + 180, rot.z);
-            return Quaternion.Euler(rot);
-        }
-    
-        private void SetupSlider()
-        {
-            switch (_screenManager.CurrentScreen)
-            {
-                case ScreenManager.UIScreen.PositionMenu:
-                    horizontalPositionSlider.minValue = -HPSliderRange;
-                    horizontalPositionSlider.maxValue = HPSliderRange;
-                    horizontalPositionSlider.value = HPSliderStart;
-                    horizontalPositionSlider.onValueChanged.AddListener(OnHPSliderValueChanged);
-        
-                    verticalPositionSlider.minValue = -VPSliderRange;
-                    verticalPositionSlider.maxValue = VPSliderRange;
-                    verticalPositionSlider.value = VPSliderStart;
-                    verticalPositionSlider.onValueChanged.AddListener(OnVPSliderValueChanged);
-                    break;
-                case ScreenManager.UIScreen.RotationMenu:
-                    rotationSlider.minValue = -RSliderRange;
-                    rotationSlider.maxValue = RSliderRange;
-                    rotationSlider.value = RSliderStart;
-                    rotationSlider.onValueChanged.AddListener(OnRSliderValueChanged);
-                    break;
-                case ScreenManager.UIScreen.MainMenu:
-                    break;
-                default:
-                    Debug.Log("None");
-                    break;
-            }
-        }
-        
-        
-        
-        private void OnHPSliderValueChanged(float value)
-        {
-            var scale = 10;
-            var val = value * scale;
-            if (_propInSlider)
-            {
-                var pos = _propInSlider.transform.position;
-                pos.x = val;
-                _propInSlider.transform.position = pos;
-
-            }
-
-            text.text = "Value: " + value;
-
-        }
-    
-        private void OnVPSliderValueChanged(float value)
-        {
-            var scale = 10;
-            var val = value * scale;
-            if (_propInSlider)
-            {
-                var pos = _propInSlider.transform.position;
-                pos.z = val;
-                _propInSlider.transform.position = pos;
-
-            }
-            text.text = "Value: " + value;
-        }
-        
-        private void OnRSliderValueChanged(float value)
-        {
-            var scale = 10;
-            var val = value * scale;
-            if (_propInSlider)
-            {
-                var pos = _propInSlider.transform.position;
-                pos.z = val;
-                _propInSlider.transform.position = pos;
-
-            }
-            text.text = "Value: " + value;
+            var pd = FindObjectOfType<ARPlaneDetection>();
+            if (!pd) return;
+            var ground = pd.anchoredGround;
+            if (!ground) return;
+            var rot = ground.transform.rotation.eulerAngles;
+            rot.y = value;
+            ground.transform.rotation = Quaternion.Euler(rot);
         }
     }
 }
